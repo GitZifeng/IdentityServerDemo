@@ -3,12 +3,45 @@ using System.Drawing.Imaging;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
+using System.Diagnostics;
 
 namespace GraphicDemo
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
+        {
+            var getTime = MeasureMethodExecutionTime(() =>
+             {
+                 for (int i = 0; i < 1; i++)
+                 {
+                     var image = CaptureWindow.ByHwnd((IntPtr)6232946, 100, 100, 400, 400);
+                     image.Save("D:\\test1.bmp", ImageFormat.Bmp);
+                     image.Dispose();
+                     Thread.Sleep(100);
+                 }
+             });
+
+            Console.WriteLine(getTime);
+        }
+
+        private static double MeasureMethodExecutionTime(Action methodToMeasure)
+        {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            methodToMeasure();
+
+            stopwatch.Stop();
+            return stopwatch.Elapsed.TotalMilliseconds;
+        }
+
+        private static string GetStampTime()
+        {
+            return Convert.ToInt64((DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds).ToString();
+        }
+
+        private static async void Capture()
         {
             Console.Write("按任意键开始DX截图……");
             Console.ReadKey();
@@ -29,7 +62,7 @@ namespace GraphicDemo
 
                 using var dx = new DirectXScreenCapturer();
                 Console.WriteLine("开始DX截图……");
-                
+
                 while (!cancel.IsCancellationRequested)
                 {
                     var (result, isBlackFrame, image) = dx.GetFrameImage();
